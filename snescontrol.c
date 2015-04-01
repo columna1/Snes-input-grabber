@@ -50,7 +50,7 @@ int main(void) {
 
 	while(1)
 	{
-		_delay_us(1000);
+		_delay_us(12);
 		getInputs();
 		usb_gamepad_send();
 	}
@@ -75,10 +75,12 @@ void getInputs(void) {
 
 	for (unsigned char i = 0; i < 16; i++) {
 		val = getInput();
-		if (val != 0)
-			inputs |= (1<<i);
-		else
-			inputs &= ~(1<<i);
+		if (i < 12) {
+			if (val != 0)
+				inputs |= (1 << i);
+			else
+				inputs &= ~(1 << i);
+		}
 
 		switch (i) {
 			case 0: // B
@@ -147,14 +149,14 @@ ISR(PCINT0_vect) {
 
 			if (lastClockVal != 0) {
 				if (keyMask != 0) {
-					if (keyMask < 0b0001000000000000 && (inputs & keyMask) == 0) {
+					if ((inputs & keyMask) == 0) {
 						PORTB &= ~(1 << PIN_SERIAL_OUT);
 					} else {
 						PORTB |= (1 << PIN_SERIAL_OUT);
 					}
 					keyMask = keyMask << 1;
 				} else {
-					PORTB |= (1 << PIN_SERIAL_OUT);
+					PORTB &= ~(1 << PIN_SERIAL_OUT);
 					waitingForClock = 0;
 				}
 			}
@@ -166,14 +168,6 @@ ISR(PCINT0_vect) {
 		lastLatchVal = latchVal;
 
 		if (lastLatchVal != 0) {
-			if (lightV > 4)
-				LED_OFF;
-			else
-				LED_ON;
-
-			lightV++;
-			if (lightV == 10)
-				lightV = 0;
 			keyMask = 1;
 			waitingForClock = 1;
 			if (keyMask != 0) {
