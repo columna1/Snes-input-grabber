@@ -27,6 +27,8 @@ volatile unsigned short inputs = 0b1111111111111111;
 
 volatile unsigned short keyMask = 0;
 
+volatile unsigned char waitingForClock = 1;
+
 void setupPins(void);
 void printBBits(void);
 void getInputs(void);
@@ -34,8 +36,6 @@ void getInputs(void);
 int main(void) {
 	CPU_PRESCALE(0);
 	LED_CONFIG;
-	LED_ON;
-	_delay_ms(500);
 	LED_OFF;
 
 	usb_init();
@@ -46,13 +46,11 @@ int main(void) {
 
 	cli();
 	setupPins();
-	PCICR = 0x01;
-	PCMSK0 = 0xFF;
 	sei();
 
 	while(1)
 	{
-		_delay_us(1667);
+		_delay_us(1000);
 		getInputs();
 		usb_gamepad_send();
 	}
@@ -74,10 +72,6 @@ void getInputs(void) {
 	PORTF &= ~(1<<PIN_LATCH_OUT);
 
 	unsigned char val;
-
-	// inputs = 0xFFFF;
-
-	// usb_gamepad_reset_state();
 
 	for (unsigned char i = 0; i < 16; i++) {
 		val = getInput();
@@ -143,13 +137,45 @@ void getInputs(void) {
 	}
 }
 
+unsigned char lightV = 0;
+
 ISR(PCINT0_vect) {
+	if (waitingForClock == 1) {
+		unsigned char clockVal = (PINB & (1 << PIN_CLOCK_IN));
+		if (clockVal != lastClockVal) {
+			lastClockVal = clockVal;
+
+			if (lastClockVal != 0) {
+				if (keyMask != 0) {
+					if (keyMask < 0b0001000000000000 && (inputs & keyMask) == 0) {
+						PORTB &= ~(1 << PIN_SERIAL_OUT);
+					} else {
+						PORTB |= (1 << PIN_SERIAL_OUT);
+					}
+					keyMask = keyMask << 1;
+				} else {
+					PORTB |= (1 << PIN_SERIAL_OUT);
+					waitingForClock = 0;
+				}
+			}
+		}
+	}
+
 	unsigned char latchVal = (PINB & (1<<PIN_LATCH_IN));
 	if (latchVal != lastLatchVal) {
 		lastLatchVal = latchVal;
 
 		if (lastLatchVal != 0) {
+			if (lightV > 4)
+				LED_OFF;
+			else
+				LED_ON;
+
+			lightV++;
+			if (lightV == 10)
+				lightV = 0;
 			keyMask = 1;
+			waitingForClock = 1;
 			if (keyMask != 0) {
 				if ((inputs & keyMask) == 0) {
 					PORTB &= ~(1 << PIN_SERIAL_OUT);
@@ -159,22 +185,6 @@ ISR(PCINT0_vect) {
 				keyMask = keyMask << 1;
 			}
 			// Already have the inputs, do nothing else
-		}
-	}
-
-	unsigned char clockVal = (PINB & (1<<PIN_CLOCK_IN));
-	if (clockVal != lastClockVal) {
-		lastClockVal = clockVal;
-
-		if (lastClockVal != 0) {
-			if (keyMask != 0) {
-				if ((inputs & keyMask) == 0) {
-					PORTB &= ~(1 << PIN_SERIAL_OUT);
-				} else {
-					PORTB |= (1 << PIN_SERIAL_OUT);
-				}
-				keyMask = keyMask << 1;
-			}
 		}
 	}
 };
@@ -187,4 +197,8 @@ void setupPins(void) {
 	DDRF |= 1<<PIN_CLOCK_OUT;
 	DDRF |= 1<<PIN_LATCH_OUT;
 	DDRF &= ~(1<<PIN_SERIAL_OUT);
+
+	PCICR |= (1 << PCIE0);
+	PCMSK0 |= (1<<PIN_CLOCK_IN);
+	PCMSK0 |= (1<<PIN_LATCH_IN);
 }
