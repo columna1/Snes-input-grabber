@@ -75,12 +75,10 @@ void getInputs(void) {
 
 	for (unsigned char i = 0; i < 16; i++) {
 		val = getInput();
-		if (i < 12) {
-			if (val != 0)
-				inputs |= (1 << i);
-			else
-				inputs &= ~(1 << i);
-		}
+		if (val != 0)
+			inputs |= (1 << i);
+		else
+			inputs &= ~(1 << i);
 
 		switch (i) {
 			case 0: // B
@@ -139,6 +137,20 @@ void getInputs(void) {
 	}
 }
 
+void sendInput(void) {
+	if (keyMask != 0) {
+		if ((inputs & keyMask) == 0) { // Check if the button is depressed
+			PORTB &= ~(1 << PIN_SERIAL_OUT); // depressed
+		} else {
+			PORTB |= (1 << PIN_SERIAL_OUT); // raised
+		}
+		keyMask = keyMask << 1;
+	} else {
+		PORTB &= ~(1 << PIN_SERIAL_OUT);
+		waitingForClock = 0;
+	}
+}
+
 unsigned char lightV = 0;
 
 ISR(PCINT0_vect) {
@@ -148,17 +160,7 @@ ISR(PCINT0_vect) {
 			lastClockVal = clockVal;
 
 			if (lastClockVal != 0) {
-				if (keyMask != 0) {
-					if ((inputs & keyMask) == 0) {
-						PORTB &= ~(1 << PIN_SERIAL_OUT);
-					} else {
-						PORTB |= (1 << PIN_SERIAL_OUT);
-					}
-					keyMask = keyMask << 1;
-				} else {
-					PORTB &= ~(1 << PIN_SERIAL_OUT);
-					waitingForClock = 0;
-				}
+				sendInput();
 			}
 		}
 	}
@@ -170,29 +172,22 @@ ISR(PCINT0_vect) {
 		if (lastLatchVal != 0) {
 			keyMask = 1;
 			waitingForClock = 1;
-			if (keyMask != 0) {
-				if ((inputs & keyMask) == 0) {
-					PORTB &= ~(1 << PIN_SERIAL_OUT);
-				} else {
-					PORTB |= (1 << PIN_SERIAL_OUT);
-				}
-				keyMask = keyMask << 1;
-			}
+			sendInput();
 			// Already have the inputs, do nothing else
 		}
 	}
 };
 
 void setupPins(void) {
-	DDRB &= ~(1<<PIN_CLOCK_IN);
-	DDRB &= ~(1<<PIN_LATCH_IN);
-	DDRB |= (1<<PIN_SERIAL_OUT);
+	DDRB &= ~(1<<PIN_CLOCK_IN); // Sets data clock coming from console to input
+	DDRB &= ~(1<<PIN_LATCH_IN); // Sets data latch coming from console to input
+	DDRB |= (1<<PIN_SERIAL_OUT); // Sets serial data going to console to output
 
-	DDRF |= 1<<PIN_CLOCK_OUT;
-	DDRF |= 1<<PIN_LATCH_OUT;
-	DDRF &= ~(1<<PIN_SERIAL_OUT);
+	DDRF |= 1<<PIN_CLOCK_OUT; // Sets data clock going to controller to output
+	DDRF |= 1<<PIN_LATCH_OUT; // Sets data latch going to controller to output
+	DDRF &= ~(1<<PIN_SERIAL_OUT); // Sets serial data coming from controller to input
 
-	PCICR |= (1 << PCIE0);
-	PCMSK0 |= (1<<PIN_CLOCK_IN);
-	PCMSK0 |= (1<<PIN_LATCH_IN);
+	PCICR |= (1 << PCIE0); // Enables the PCINT0 interrupt
+	PCMSK0 |= (1<<PIN_CLOCK_IN); // Enables the interrupt for data clock
+	PCMSK0 |= (1<<PIN_LATCH_IN); // Enables interrupt for data latch
 }

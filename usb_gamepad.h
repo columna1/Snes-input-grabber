@@ -12,13 +12,13 @@ typedef struct {
     uint8_t y_axis;
 
     uint8_t b_btn : 1;
-    uint8_t y_btn : 1;
-    uint8_t select_btn : 1;
-    uint8_t start_btn : 1;
     uint8_t a_btn : 1;
+    uint8_t y_btn : 1;
     uint8_t x_btn : 1;
     uint8_t l_btn : 1;
     uint8_t r_btn : 1;
+    uint8_t select_btn : 1;
+    uint8_t start_btn : 1;
 } gamepad_state_t;
 
 extern gamepad_state_t gamepad_state;
