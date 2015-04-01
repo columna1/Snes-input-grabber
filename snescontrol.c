@@ -13,13 +13,13 @@
 #define LED_CONFIG	(DDRD |= (1<<6))
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
 
-#define PIN_CLOCK_IN 0 // B
-#define PIN_LATCH_IN 1 // B
-#define PIN_SERIAL_IN 4 // F
+#define PIN_CLOCK_IN 0 // B0 : Data clock coming from console
+#define PIN_LATCH_IN 1 // B1 : Data latch coming from console
+#define PIN_SERIAL_IN 4 // F4 : Serial data going to console
 
-#define PIN_CLOCK_OUT 0 // F
-#define PIN_LATCH_OUT 1 // F
-#define PIN_SERIAL_OUT 2 // B
+#define PIN_CLOCK_OUT 0 // F0 : Data clock going to controller
+#define PIN_LATCH_OUT 1 // F1 : Data latch going to controller
+#define PIN_SERIAL_OUT 2 // B2 : Serial data coming from controller
 
 volatile unsigned char lastClockVal = 3, lastLatchVal = 3;
 
@@ -27,7 +27,7 @@ volatile unsigned short inputs = 0b1111111111111111;
 
 volatile unsigned short keyMask = 0;
 
-volatile unsigned char waitingForClock = 1;
+volatile unsigned char waitingForClock = 0;
 
 void setupPins(void);
 void printBBits(void);
@@ -137,22 +137,6 @@ void getInputs(void) {
 	}
 }
 
-void sendInput(void) {
-	if (keyMask != 0) {
-		if ((inputs & keyMask) == 0) { // Check if the button is depressed
-			PORTB &= ~(1 << PIN_SERIAL_OUT); // depressed
-		} else {
-			PORTB |= (1 << PIN_SERIAL_OUT); // raised
-		}
-		keyMask = keyMask << 1;
-	} else {
-		PORTB &= ~(1 << PIN_SERIAL_OUT);
-		waitingForClock = 0;
-	}
-}
-
-unsigned char lightV = 0;
-
 ISR(PCINT0_vect) {
 	if (waitingForClock == 1) {
 		unsigned char clockVal = (PINB & (1 << PIN_CLOCK_IN));
@@ -160,7 +144,17 @@ ISR(PCINT0_vect) {
 			lastClockVal = clockVal;
 
 			if (lastClockVal != 0) {
-				sendInput();
+				if (keyMask != 0) {
+					if ((inputs & keyMask) == 0) { // Check if the button is depressed
+						PORTB &= ~(1 << PIN_SERIAL_OUT); // depressed
+					} else {
+						PORTB |= (1 << PIN_SERIAL_OUT); // raised
+					}
+					keyMask = keyMask << 1;
+				} else {
+					PORTB &= ~(1 << PIN_SERIAL_OUT);
+					waitingForClock = 0;
+				}
 			}
 		}
 	}
@@ -172,7 +166,17 @@ ISR(PCINT0_vect) {
 		if (lastLatchVal != 0) {
 			keyMask = 1;
 			waitingForClock = 1;
-			sendInput();
+			if (keyMask != 0) {
+				if ((inputs & keyMask) == 0) { // Check if the button is depressed
+					PORTB &= ~(1 << PIN_SERIAL_OUT); // depressed
+				} else {
+					PORTB |= (1 << PIN_SERIAL_OUT); // raised
+				}
+				keyMask = keyMask << 1;
+			} else {
+				PORTB &= ~(1 << PIN_SERIAL_OUT);
+				waitingForClock = 0;
+			}
 			// Already have the inputs, do nothing else
 		}
 	}
