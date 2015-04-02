@@ -137,9 +137,11 @@ void getInputs(void) {
 	}
 }
 
+volatile unsigned char clockVal, latchVal;
+
 ISR(PCINT0_vect) {
-	if (waitingForClock == 1) {
-		unsigned char clockVal = (PINB & (1 << PIN_CLOCK_IN));
+	if (waitingForClock) {
+		clockVal = (PINB & (1 << PIN_CLOCK_IN));
 		if (clockVal != lastClockVal) {
 			lastClockVal = clockVal;
 
@@ -159,7 +161,7 @@ ISR(PCINT0_vect) {
 		}
 	}
 
-	unsigned char latchVal = (PINB & (1<<PIN_LATCH_IN));
+	latchVal = (PINB & (1<<PIN_LATCH_IN));
 	if (latchVal != lastLatchVal) {
 		lastLatchVal = latchVal;
 
