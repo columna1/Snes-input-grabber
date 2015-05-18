@@ -1,6 +1,7 @@
 # Snes Input Display
 An input display made with a teensy 2.0
 This input display takes input from a snes controller and outputs it to a console and the computer through usb as an HID gamepad
+There is a [companion program](https://github.com/columna1/Love2d-SNES-Input-Display/) made in love2d to visualize the input for use on livestreams and videos
 # Schematic
 ![alt tag](https://raw.github.com/columna1/Snes-input-display/master/schematic-v1.0.png)
 # Compiling
