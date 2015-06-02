@@ -9,4 +9,7 @@ There is a [companion program](https://github.com/columna1/Love2d-SNES-Input-Dis
 #Credits
 Thanks to Josh Kropf for the usb gamepad code
 Most of the other code made by [Altenius](https://github.com/Altenius)
+
 Guidance, Planning, Testing, Building, and reference from [columna1](https://github.com/columna1)
+
+-Note, If you want to use the teensy as a simple snes-usb adapter you can do so if you solder the 5v from the controler to the bottom 5v pad on the teensy but I don't know if that will cause problems or be fine. It seems to work for me. I think (not sure) that you can connect the 5v pad from the teensy to the 5v on the console to power the teensy from the console as well.
