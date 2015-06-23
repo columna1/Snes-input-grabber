@@ -12,4 +12,4 @@ Most of the other code made by [Altenius](https://github.com/Altenius)
 
 Guidance, Planning, Testing, Building, and reference from [columna1](https://github.com/columna1)
 
--Note, If you want to use the teensy as a simple snes-usb adapter you can do so if you solder the 5v from the controler to the bottom 5v pad on the teensy but I don't know if that will cause problems or be fine. It seems to work for me. I think (not sure) that you can connect the 5v pad from the teensy to the 5v on the console to power the teensy from the console as well.
+-Note, If you want to use the teensy as a simple snes-usb adapter you can do so if you solder the 5v from the controler to vcc pin of the teensy. This will supply power from the teensy to the snes controller if you want to use it while disconnected from a SNES console. If you are clever you could even wire power from the SNES to the teensy so that you could use this while disconnected from the computer if you so desired.
