@@ -12,4 +12,4 @@ Most of the other code made by [Altenius](https://github.com/Altenius)
 
 Guidance, Planning, Testing, Building, and reference from [columna1](https://github.com/columna1)
 
--Note, If you want to use the teensy as a simple snes-usb adapter you can do so if you solder the 5v from the controler to vcc pin of the teensy. This will supply power from the teensy to the snes controller if you want to use it while disconnected from a SNES console. If you are clever you could even wire power from the SNES to the teensy so that you could use this while disconnected from the computer if you so desired.
+-Note, If you want to use the teensy as a simple snes-usb adapter you can do so if you solder the 5v from the controler to vcc pin of the teensy. This will supply power from the teensy to the snes controller if you want to use it while disconnected from a SNES console. If you are [clever](https://www.pjrc.com/teensy/external_power.html) about it you could even wire power from the SNES to the teensy so that you could use this while disconnected from the computer if you so desired.
