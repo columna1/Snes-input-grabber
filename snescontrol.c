@@ -29,26 +29,28 @@ volatile unsigned short keyMask = 0;
 
 volatile unsigned char waitingForClock = 0;
 
-void setupPins(void);
+void setupPins(void);//Set the pins input/output as needed
 void printBBits(void);
-void getInputs(void);
+void getInputs(void);//Get the state of the controller
 
 int main(void) {
+	//set the clock to the highest available
 	CPU_PRESCALE(0);
 	LED_CONFIG;
 	LED_OFF;
 
+	//init usb communication for HID device section (to act like a joystick)
 	usb_init();
-	while (!usb_configured()); // wait
+	while (!usb_configured()); // wait until it is configured
 
-	_delay_ms(1000);
+	_delay_ms(1000);//wait a bit to be safe 
 	usb_gamepad_reset_state();
 
-	cli();
-	setupPins();
+	cli();//stuff for interupts
+	setupPins();//sets the pins up
 	sei();
 
-	while(1)
+	while(1)//loop and get/send the controller's state
 	{
 		_delay_us(12);
 		getInputs();
@@ -56,7 +58,9 @@ int main(void) {
 	}
 }
 
+
 unsigned char getInput(void) {
+	//polls the controller for the states of one the buttons
 	unsigned char ret = (PINF & (1<<PIN_SERIAL_IN));
 	_delay_us(6);
 	PORTF |= (1<<PIN_CLOCK_OUT);
@@ -66,21 +70,21 @@ unsigned char getInput(void) {
 }
 
 void getInputs(void) {
-	// pulse latch
+	// pulse latch, tell the controller we want its buttons
 	PORTF |= (1<<PIN_LATCH_OUT);
 	_delay_us(12);
 	PORTF &= ~(1<<PIN_LATCH_OUT);
 
 	unsigned char val;
 
-	for (unsigned char i = 0; i < 16; i++) {
+	for (unsigned char i = 0; i < 16; i++) {//for every button go through and get it/send it to the comptuer
 		val = getInput();
-		if (val != 0)
+		if (val != 0)//put the state into the inputs variable to use for sending to the console
 			inputs |= (1 << i);
 		else
 			inputs &= ~(1 << i);
 
-		switch (i) {
+		switch (i) {//set the variables to send to computer
 			case 0: // B
 				gamepad_state.b_btn = (val == 0) ? 1 : 0;
 				break;
@@ -139,35 +143,36 @@ void getInputs(void) {
 
 volatile unsigned char clockVal, latchVal;
 
-ISR(PCINT0_vect) {
-	if (waitingForClock) {
-		clockVal = (PINB & (1 << PIN_CLOCK_IN));
-		if (clockVal != lastClockVal) {
-			lastClockVal = clockVal;
+ISR(PCINT0_vect) {//Interupt routine
+	if (waitingForClock) {//if we are currently listening for clock
+		clockVal = (PINB & (1 << PIN_CLOCK_IN));//get the state of the clock to see if it is a rising/falling edge
+		if (clockVal != lastClockVal) { //if it is a different state than last time aka this interupt is for us
+			lastClockVal = clockVal;//set this for later
 
-			if (lastClockVal != 0) {
-				if (keyMask != 0) {
-					if ((inputs & keyMask) == 0) { // Check if the button is depressed
+			if (lastClockVal != 0) {//if it is the rising edge
+				if (keyMask != 0) {//and we are sending the controller state
+					if ((inputs & keyMask) == 0) { // Check if the button on the controller is depressed and set the output for the console to read
 						PORTB &= ~(1 << PIN_SERIAL_OUT); // depressed
 					} else {
 						PORTB |= (1 << PIN_SERIAL_OUT); // raised
 					}
-					keyMask = keyMask << 1;
-				} else {
-					PORTB &= ~(1 << PIN_SERIAL_OUT);
+					keyMask = keyMask << 1;//shift the mask to be used for next cycle
+				} else {//we aren't sending the controlls/we are done sending them
+					PORTB &= ~(1 << PIN_SERIAL_OUT);//set to 0 and wait for next latch
 					waitingForClock = 0;
 				}
 			}
 		}
 	}
 
-	latchVal = (PINB & (1<<PIN_LATCH_IN));
-	if (latchVal != lastLatchVal) {
+	latchVal = (PINB & (1<<PIN_LATCH_IN));//get the state of the latch to see if it changed
+	if (latchVal != lastLatchVal) {//if it changed
 		lastLatchVal = latchVal;
 
-		if (lastLatchVal != 0) {
-			keyMask = 1;
-			waitingForClock = 1;
+		if (lastLatchVal != 0) {//if this is the rising edge
+			keyMask = 1;//reset the key mask
+			waitingForClock = 1;//let us know we are sending to the controller
+			//send out the first button
 			if (keyMask != 0) {
 				if ((inputs & keyMask) == 0) { // Check if the button is depressed
 					PORTB &= ~(1 << PIN_SERIAL_OUT); // depressed
