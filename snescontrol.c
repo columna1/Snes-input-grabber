@@ -25,22 +25,6 @@
 #define PIN_LATCH 1 // B1 : Data latch going to controller
 
 void setupPins(void);
-static void updateGamepadState(void);
-
-static inline unsigned char getInput(void) {
-	_delay_us(6);
-	PORTB |= (1 << PIN_CLOCK); //set clock line to high
-	_delay_us(6);
-	PORTB &= ~(1<<PIN_CLOCK); //set clock line to low
-	unsigned char ret = (PINB & (1<<PIN_SERIAL));
-	return ret;
-}
-
-static inline void pulseLatch(void) {
-	PORTB |= (1<<PIN_LATCH);
-	_delay_us(12);
-	PORTB &= ~(1<<PIN_LATCH);
-}
 
 int main(void) {
 	CPU_PRESCALE(0);
@@ -60,7 +44,6 @@ int main(void) {
 
 	while(1)
 	{
-
 		PINB_HIGHFALL(PIN_LATCH);
 		val = (PINB & (1<<PIN_SERIAL));
 		gamepad_state.b_btn = (val == 0);

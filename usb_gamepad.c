@@ -110,7 +110,7 @@ static const uint8_t PROGMEM endpoint_config_table[] = {
 // spec and relevant portions of any USB class specifications!
 
 
-static uint8_t PROGMEM device_descriptor[] = {
+static const uint8_t PROGMEM device_descriptor[] = {
 18,					// bLength
 1,					// bDescriptorType
 0x10, 0x01,				// bcdUSB
@@ -156,7 +156,7 @@ static const uint8_t PROGMEM gamepad_hid_report_desc[] = {
 
 #define CONFIG1_DESC_SIZE		(9+9+9+7)
 #define GAMEPAD_HID_DESC_OFFSET	(9+9)
-static uint8_t PROGMEM config1_descriptor[CONFIG1_DESC_SIZE] = {
+static const uint8_t PROGMEM config1_descriptor[CONFIG1_DESC_SIZE] = {
 // configuration descriptor, USB spec 9.6.3, page 264-266, Table 9-10
 9, 					// bLength;
 2,					// bDescriptorType;
@@ -203,17 +203,17 @@ struct usb_string_descriptor_struct {
     uint8_t bDescriptorType;
     int16_t wString[];
 };
-static struct usb_string_descriptor_struct PROGMEM string0 = {
+static const struct usb_string_descriptor_struct PROGMEM string0 = {
         4,
         3,
         {0x0409}
 };
-static struct usb_string_descriptor_struct PROGMEM string1 = {
+static const struct usb_string_descriptor_struct PROGMEM string1 = {
         sizeof(STR_MANUFACTURER),
         3,
         STR_MANUFACTURER
 };
-static struct usb_string_descriptor_struct PROGMEM string2 = {
+static const struct usb_string_descriptor_struct PROGMEM string2 = {
         sizeof(STR_PRODUCT),
         3,
         STR_PRODUCT
@@ -221,7 +221,7 @@ static struct usb_string_descriptor_struct PROGMEM string2 = {
 
 // This table defines which descriptor data is sent for each specific
 // request from the host (in wValue and wIndex).
-static struct descriptor_list_struct {
+static const struct descriptor_list_struct {
     uint16_t	wValue;
     uint16_t	wIndex;
     const uint8_t	*addr;
@@ -247,7 +247,7 @@ static struct descriptor_list_struct {
 // zero when we are not configured, non-zero when enumerated
 static volatile uint8_t usb_configuration = 0;
 
-static gamepad_state_t PROGMEM gamepad_idle_state = {
+static const gamepad_state_t PROGMEM gamepad_idle_state = {
         .b_btn = 0, .y_btn = 0, .select_btn = 0, .start_btn = 0,
         .a_btn = 0, .x_btn = 0, .l_btn = 0, .r_btn = 0,
 
@@ -260,7 +260,7 @@ static gamepad_state_t PROGMEM gamepad_idle_state = {
  * descriptor is sent to the host. They where discovered by tracing output
  * from a Madcatz SF4 Joystick. Sending these bytes makes the PS button work.
  */
-static uint8_t PROGMEM magic_init_bytes[] = {
+static const uint8_t PROGMEM magic_init_bytes[] = {
     0x21, 0x26, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00
 };
 
@@ -556,5 +556,3 @@ ISR(USB_COM_vect)
     }
     UECONX = (1<<STALLRQ) | (1<<EPEN);	// stall
 }
-
-
