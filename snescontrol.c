@@ -1,4 +1,4 @@
-//version 1.1 snescontrol.c by Altenius and columna1
+//version 1.2 snescontrol.c by Altenius and columna1
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
